@@ -4,7 +4,7 @@
 //! calls of `horizon-mod-api` and draws the editor on top (recordings browser, timeline, free
 //! camera, camera paths). This first version only registers its key; the editor arrives in steps.
 
-use mod_api::{Hooks, KeyConflictContext, KeyRegistration, RegistrationContext, Registrar};
+use mod_api::{Hooks, KeyConflictContext, KeyRegistration, Registrar, RegistrationContext};
 
 /// The mod's id: its settings folder and its key's line in the game's key file.
 pub const ID: &str = "replay_studio";
