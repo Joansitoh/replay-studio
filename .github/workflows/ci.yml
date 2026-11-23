@@ -16,13 +16,27 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Install cargo-horizon-mod for the pinned SDK build
+      - name: Read the pinned SDK build
         run: |
           SDK="$(python3 -c 'import tomllib; print(tomllib.load(open("Cargo.toml", "rb"))["package"]["metadata"]["horizon"]["sdk"])')"
-          cargo install --locked --git https://github.com/horizon-rust/horizon --rev "$SDK" cargo-horizon-mod
+          echo "SDK=$SDK" >> "$GITHUB_ENV"
 
-      - name: Fetch pinned SDK
-        run: cargo horizon-mod check
+      - name: Cache cargo-horizon-mod
+        id: tool
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-horizon-mod
+          key: cargo-horizon-mod-${{ env.SDK }}
+
+      - name: Install cargo-horizon-mod for the pinned SDK build
+        if: steps.tool.outputs.cache-hit != 'true'
+        run: cargo install --locked --git https://github.com/horizon-rust/horizon --rev "$SDK" cargo-horizon-mod
+
+      # The build fetches the pinned SDK into .horizon/sdk/ (the path dependency needs it), builds
+      # mod.wasm with the pinned toolchain and writes the [wasm] table. `check` runs only on the
+      # packed .hmod: before a build the manifest has no [wasm] table and reads as a content mod.
+      - name: Build the wasm .hmod
+        run: cargo horizon-mod build --wasm
 
       - name: Format, clippy and unit tests
         run: |
@@ -30,10 +44,8 @@ jobs:
           cargo clippy --all-targets -- -D warnings
           cargo test
 
-      - name: Build and verify the wasm .hmod
-        run: |
-          cargo horizon-mod build --wasm
-          cargo horizon-mod check target/horizon-mod/replay_studio.hmod
+      - name: Verify the package
+        run: cargo horizon-mod check target/horizon-mod/replay_studio.hmod
 
       - name: Keep the package
         uses: actions/upload-artifact@v4
