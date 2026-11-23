@@ -7,4 +7,5 @@ license = "MIT"
 homepage = "https://github.com/Joansitoh/replay-studio"
 api = "0.2"
 side = "client"
-capabilities = []
+# registries: the one capability the manifest takes today; the official wasm template and Zoom carry it too.
+capabilities = ["registries"]
